@@ -1,15 +1,15 @@
 [gd_scene load_steps=3 format=3 uid="uid://d4ivs6wlnusij"]
 
-[ext_resource type="PackedScene" uid="uid://b1ohjvgyauq2h" path="res://white.tscn" id="1_0xm2m"]
+[ext_resource type="PackedScene" uid="uid://b1ohjvgyauq2h" path="res://circle.tscn" id="1_0xm2m"]
 [ext_resource type="Script" uid="uid://dnldp2eejrc6l" path="res://line.gd" id="2_h2yge"]
 
 [node name="Node2D" type="Node2D"]
 
-[node name="White" parent="." instance=ExtResource("1_0xm2m")]
-position = Vector2(114, 49)
+[node name="Circle" parent="." instance=ExtResource("1_0xm2m")]
+position = Vector2(393, 294)
 
 [node name="White2" parent="." instance=ExtResource("1_0xm2m")]
-position = Vector2(602, 191)
+position = Vector2(753, 295)
 
 [node name="line" type="ColorRect" parent="." node_paths=PackedStringArray("LinkA", "LinkB")]
 process_mode = 3
@@ -18,13 +18,13 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = 114.0
-offset_top = 115.0
-offset_right = 602.0
-offset_bottom = 125.0
+offset_left = 393.0
+offset_top = 294.0
+offset_right = 753.0
+offset_bottom = 304.0
 grow_horizontal = 2
 grow_vertical = 2
-rotation = 0.47473
+rotation = 0.00277773
 script = ExtResource("2_h2yge")
-LinkA = NodePath("../White")
+LinkA = NodePath("../Circle")
 LinkB = NodePath("../White2")

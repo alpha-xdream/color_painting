@@ -12,5 +12,9 @@ func _ready() -> void:
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-	size = Vector2(abs(LinkA.global_position.x - LinkB.global_position.x), size.y)
-	global_position = Vector2((LinkA.global_position.x + LinkB.global_position.x) * 0.5, (LinkA.global_position.y + LinkB.global_position.y) * 0.5) - size/2
+	if LinkA == null || LinkB == null:
+		return
+	var v = LinkA.global_position - LinkB.global_position
+	size = Vector2(v.length(), size.y)
+	global_position = LinkA.global_position
+	rotation = v.angle() + PI
