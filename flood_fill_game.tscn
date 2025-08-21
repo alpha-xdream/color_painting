@@ -6,10 +6,10 @@
 script = ExtResource("1_wyk1y")
 
 [node name="GridContainer" type="GridContainer" parent="."]
-offset_left = 317.0
-offset_top = 17.0
-offset_right = 917.0
-offset_bottom = 617.0
+offset_left = 286.0
+offset_top = 60.0
+offset_right = 855.0
+offset_bottom = 629.0
 theme_override_constants/h_separation = 0
 theme_override_constants/v_separation = 0
 
@@ -41,4 +41,46 @@ grow_vertical = 2
 size_flags_horizontal = 0
 size_flags_vertical = 4
 
+[node name="EditUI" type="CanvasLayer" parent="."]
+
+[node name="HBoxContainer" type="HBoxContainer" parent="EditUI"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -126.0
+offset_top = 8.0
+offset_right = 126.0
+offset_bottom = 40.0
+grow_horizontal = 2
+pivot_offset = Vector2(0.5, 0)
+size_flags_horizontal = 4
+
+[node name="Button" type="Button" parent="EditUI/HBoxContainer"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "保存"
+
+[node name="Button2" type="Button" parent="EditUI/HBoxContainer"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "读取"
+
+[node name="Button3" type="Button" parent="EditUI/HBoxContainer"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "清空"
+
+[node name="Button4" type="Button" parent="EditUI/HBoxContainer"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "返回"
+
 [connection signal="button_up" from="UI/Restart" to="." method="_on_restart_pressed"]
+[connection signal="button_down" from="EditUI/HBoxContainer/Button" to="." method="_on_save_pressed"]
+[connection signal="button_down" from="EditUI/HBoxContainer/Button2" to="." method="_on_load_pressed"]
+[connection signal="button_down" from="EditUI/HBoxContainer/Button3" to="." method="_on_clear_pressed"]
+[connection signal="button_down" from="EditUI/HBoxContainer/Button4" to="." method="_on_return_pressed"]

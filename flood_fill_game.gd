@@ -120,11 +120,15 @@ func update_ui():
 	steps_lbl.text = "步数: %d / %d" % [steps, max_steps]
 
 func _on_restart_pressed() -> void:
+	restart_current_level()
+	
+func restart_current_level():
 	steps = 0
 	game_over = false
 	build_grid()
 	update_ui()
 	status_lbl.text = ""
+	
 
 func init_colors() -> void:
 	for i in color_count:
@@ -173,3 +177,89 @@ func init_colors() -> void:
 func _on_color_changed(idx: int) -> void:
 	# 例如：把当前“笔刷”颜色记录到变量
 	select_color_index = idx
+
+
+
+# ========= 新增变量 =========
+@onready var edit_ui: CanvasLayer = $EditUI
+var edit_mode := false
+var brush_color_edit := 0		  # 编辑模式下的笔刷颜色
+
+# ========= 输入切换 =========
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):   # Esc 也可
+		toggle_edit_mode()
+
+func toggle_edit_mode() -> void:
+	edit_mode = !edit_mode
+	edit_ui.visible = edit_mode
+	set_process_input(edit_mode)		   # 让 _input 只在编辑模式接收
+	if edit_mode:
+		status_lbl.text = "编辑模式"
+	else:
+		restart_current_level()			# 退出编辑后重新随机一局或保留
+
+# ========= 编辑模式下输入 =========
+func _input(event: InputEvent) -> void:
+	if not edit_mode: return
+
+	var pos := get_viewport().get_mouse_position()
+	var cell := _cell_at_pos(pos)
+	if cell == null: return
+
+	# 左键循环颜色
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var old :int= board[cell.y][cell.x]
+		var next := (old + 1) % color_count
+		board[cell.y][cell.x] = next
+		redraw_board()
+
+	# 右键批量填充（同色连通块）
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
+		var target :int= board[cell.y][cell.x]
+		flood_fill(cell, target, brush_color_edit)
+		redraw_board()
+
+# 工具：把屏幕坐标 → 格子坐标
+func _cell_at_pos(pos: Vector2) -> Vector2i:
+	var local := grid.get_global_transform().affine_inverse() * pos
+	var col := int(local.x / (grid.size.x / grid_size))
+	var row := int(local.y / (grid.size.y / grid_size))
+	if col < 0 or col >= grid_size or row < 0 or row >= grid_size:
+		return Vector2i(-1, -1)
+	return Vector2i(col, row)
+
+# ========= 保存 / 读取 =========
+func _on_save_pressed() -> void:
+	var file := FileAccess.open("user://level.txt", FileAccess.WRITE)
+	for row in board:
+		file.store_line(",".join(row.map(str)))
+	file.close()
+	print("关卡已保存到 user://level.txt")
+
+func _on_load_pressed() -> void:
+	if not FileAccess.file_exists("user://level.txt"):
+		push_error("文件不存在"); return
+	var file := FileAccess.open("user://level.txt", FileAccess.READ)
+	var lines := file.get_as_text().split("\n")
+	file.close()
+	# 简单校验
+	if lines.size() != grid_size:
+		push_error("关卡尺寸不符"); return
+	for y in grid_size:
+		var cols := lines[y].split(",", true, 0)
+		if cols.size() != grid_size:
+			push_error("列数不符"); return
+		for x in grid_size:
+			board[y][x] = int(cols[x])
+	redraw_board()
+	status_lbl.text = "关卡已加载"
+
+func _on_clear_pressed() -> void:
+	for y in grid_size:
+		for x in grid_size:
+			board[y][x] = 0
+	redraw_board()
+
+func _on_return_pressed() -> void:
+	toggle_edit_mode()
