@@ -8,12 +8,15 @@ class_name FloodFillGame
 @onready var grid: GridContainer = $GridContainer
 @onready var steps_lbl: Label = $UI/Steps
 @onready var status_lbl: Label = $UI/Status
-@onready var color_palette: HBoxContainer = $ColorPalette
+@onready var color_palette: VBoxContainer = $ColorPalette
+@onready var restart: Button = $UI/Restart
 
 
 const PALETTE = [
-	Color("#ef476f"), Color("#ffd166"),
-	Color("#06d6a0"), Color("#118ab2"),
+	Color("#118ab2"),
+	Color("#ef476f"), 
+	Color("#ffd166"),
+	Color("#06d6a0"), 
 	Color("#073b4c"), Color("#ffffff")
 ]
 
@@ -26,7 +29,6 @@ var select_color_index := 0
 func _ready():
 	randomize()
 	build_grid()
-	connect_signals()
 	update_ui()
 	init_colors()
 
@@ -46,7 +48,9 @@ func build_grid():
 			c.mouse_filter = Control.MOUSE_FILTER_STOP
 			c.set_meta("pos", Vector2i(x, y))
 			grid.add_child(c)
+			c.gui_input.connect(_on_cell_clicked.bind(c))
 			cells.append(c)
+			
 	# 随机染色
 	board = []
 	for y in grid_size:
@@ -55,11 +59,6 @@ func build_grid():
 			row.append(randi_range(0, color_count-1))
 		board.append(row)
 	redraw_board()
-
-func connect_signals():
-	# 统一监听所有 ColorRect 的 gui_input
-	for c in cells:
-		c.gui_input.connect(_on_cell_clicked.bind(c))
 
 func redraw_board():
 	var idx := 0

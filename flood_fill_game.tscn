@@ -8,8 +8,10 @@ script = ExtResource("1_wyk1y")
 [node name="GridContainer" type="GridContainer" parent="."]
 offset_left = 317.0
 offset_top = 17.0
-offset_right = 921.0
-offset_bottom = 621.0
+offset_right = 917.0
+offset_bottom = 617.0
+theme_override_constants/h_separation = 0
+theme_override_constants/v_separation = 0
 
 [node name="UI" type="VBoxContainer" parent="."]
 offset_right = 82.0
@@ -21,21 +23,22 @@ text = "123"
 
 [node name="Status" type="Label" parent="UI"]
 layout_mode = 2
-text = "123"
 
 [node name="Restart" type="Button" parent="UI"]
 layout_mode = 2
 text = "重新开始"
 
-[node name="ColorPalette" type="HBoxContainer" parent="."]
+[node name="ColorPalette" type="VBoxContainer" parent="."]
 layout_direction = 2
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 6.0
-offset_top = 118.0
-offset_right = 153.0
-offset_bottom = 162.0
+offset_left = 934.0
+offset_top = 103.0
+offset_right = 1016.0
+offset_bottom = 276.0
 grow_vertical = 2
 size_flags_horizontal = 0
 size_flags_vertical = 4
+
+[connection signal="button_up" from="UI/Restart" to="." method="_on_restart_pressed"]
