@@ -79,6 +79,18 @@ layout_mode = 2
 size_flags_horizontal = 4
 text = "返回"
 
+[node name="SaveDialog" type="FileDialog" parent="EditUI"]
+access = 2
+filters = PackedStringArray("*.txt")
+
+[node name="LoadDialog" type="FileDialog" parent="EditUI"]
+auto_translate_mode = 1
+title = "Open a File"
+ok_button_text = "Open"
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.txt")
+
 [connection signal="button_up" from="UI/Restart" to="." method="_on_restart_pressed"]
 [connection signal="button_down" from="EditUI/HBoxContainer/Button" to="." method="_on_save_pressed"]
 [connection signal="button_down" from="EditUI/HBoxContainer/Button2" to="." method="_on_load_pressed"]

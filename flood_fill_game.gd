@@ -11,6 +11,9 @@ class_name FloodFillGame
 @onready var color_palette: VBoxContainer = $ColorPalette
 @onready var restart: Button = $UI/Restart
 
+@onready var save_dialog: FileDialog = $EditUI/SaveDialog
+@onready var load_dialog: FileDialog = $EditUI/LoadDialog
+
 
 const PALETTE = [
 	Color("#118ab2"),
@@ -22,6 +25,7 @@ const PALETTE = [
 
 var cells: Array[ColorRect] = []
 var board: Array[Array]  # board[y][x] = color_index
+var pre_board: Array[Array]  # board[y][x] = color_index
 var steps := 0
 var game_over := false
 var select_color_index := 0
@@ -31,6 +35,9 @@ func _ready():
 	build_grid()
 	update_ui()
 	init_colors()
+	update_edit_ui()
+	save_dialog.file_selected.connect(_do_save)
+	load_dialog.file_selected.connect(_do_load)
 
 func build_grid():
 	# 清空旧格子
@@ -51,13 +58,17 @@ func build_grid():
 			c.gui_input.connect(_on_cell_clicked.bind(c))
 			cells.append(c)
 			
-	# 随机染色
-	board = []
-	for y in grid_size:
-		var row: Array[int] = []
-		for x in grid_size:
-			row.append(randi_range(0, color_count-1))
-		board.append(row)
+	if len(pre_board) == 0:
+		# 随机染色
+		board = []
+		for y in grid_size:
+			var row: Array[int] = []
+			for x in grid_size:
+				row.append(randi_range(0, color_count-1))
+			board.append(row)
+		pre_board = board.duplicate()
+	else:
+		board = pre_board.duplicate()
 	redraw_board()
 
 func redraw_board():
@@ -191,7 +202,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		toggle_edit_mode()
 
 func toggle_edit_mode() -> void:
+	print("toggle_edit_mode 1111")
 	edit_mode = !edit_mode
+	print("toggle_edit_mode 222")
+	
+	if !edit_mode:
+		pre_board = board.duplicate()
+	update_edit_ui()
+
+func update_edit_ui():
 	edit_ui.visible = edit_mode
 	set_process_input(edit_mode)		   # 让 _input 只在编辑模式接收
 	if edit_mode:
@@ -205,13 +224,14 @@ func _input(event: InputEvent) -> void:
 
 	var pos := get_viewport().get_mouse_position()
 	var cell := _cell_at_pos(pos)
-	if cell == null: return
+	if cell.x < 0: return
 
 	# 左键循环颜色
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var old :int= board[cell.y][cell.x]
 		var next := (old + 1) % color_count
 		board[cell.y][cell.x] = next
+		print("11111111", cell)
 		redraw_board()
 
 	# 右键批量填充（同色连通块）
@@ -231,19 +251,25 @@ func _cell_at_pos(pos: Vector2) -> Vector2i:
 
 # ========= 保存 / 读取 =========
 func _on_save_pressed() -> void:
-	var file := FileAccess.open("user://level.txt", FileAccess.WRITE)
+	save_dialog.popup_centered_ratio(0.4)
+
+func _on_load_pressed() -> void:
+	load_dialog.popup_centered_ratio(0.4)
+	
+# ---------- 实际保存 ----------
+func _do_save(path: String) -> void:
+	var file := FileAccess.open(path, FileAccess.WRITE)
 	for row in board:
 		file.store_line(",".join(row.map(str)))
 	file.close()
-	print("关卡已保存到 user://level.txt")
+	status_lbl.text = "已保存: %s" % path.get_file()
 
-func _on_load_pressed() -> void:
-	if not FileAccess.file_exists("user://level.txt"):
-		push_error("文件不存在"); return
-	var file := FileAccess.open("user://level.txt", FileAccess.READ)
-	var lines := file.get_as_text().split("\n")
+# ---------- 实际读取 ----------
+func _do_load(path: String) -> void:
+	var file := FileAccess.open(path, FileAccess.READ)
+	var lines := file.get_as_text().split("\n", false)
 	file.close()
-	# 简单校验
+
 	if lines.size() != grid_size:
 		push_error("关卡尺寸不符"); return
 	for y in grid_size:
@@ -252,8 +278,9 @@ func _on_load_pressed() -> void:
 			push_error("列数不符"); return
 		for x in grid_size:
 			board[y][x] = int(cols[x])
+	pre_board = board.duplicate()
 	redraw_board()
-	status_lbl.text = "关卡已加载"
+	status_lbl.text = "已加载: %s" % path.get_file()
 
 func _on_clear_pressed() -> void:
 	for y in grid_size:
