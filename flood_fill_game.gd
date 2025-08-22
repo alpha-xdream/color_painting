@@ -29,6 +29,7 @@ var pre_board: Array[Array]  # board[y][x] = color_index
 var steps := 0
 var game_over := false
 var select_color_index := 0
+var group := ButtonGroup.new()
 
 func _ready():
 	randomize()
@@ -56,6 +57,7 @@ func build_grid():
 			c.set_meta("pos", Vector2i(x, y))
 			grid.add_child(c)
 			c.gui_input.connect(_on_cell_clicked.bind(c))
+			c.set_process_input(false)
 			cells.append(c)
 			
 	if len(pre_board) == 0:
@@ -66,9 +68,9 @@ func build_grid():
 			for x in grid_size:
 				row.append(randi_range(0, color_count-1))
 			board.append(row)
-		pre_board = board.duplicate()
+		pre_board = board.duplicate(true)
 	else:
-		board = pre_board.duplicate()
+		board = pre_board.duplicate(true)
 	redraw_board()
 
 func redraw_board():
@@ -90,10 +92,11 @@ func _on_cell_clicked(event: InputEvent, cell: ColorRect) -> void:
 		return  # 同颜色，无效点击
 
 	flood_fill(pos, target_color, new_color)
-	steps += 1
+	if !edit_mode:
+		steps += 1
+		check_win_lose()
 	redraw_board()
 	update_ui()
-	check_win_lose()
 
 func flood_fill(start: Vector2i, old: int, new: int) -> void:
 	var stack := [start]
@@ -144,6 +147,9 @@ func restart_current_level():
 func init_colors() -> void:
 	for i in color_count:
 		var btn := Button.new()
+		btn.toggle_mode = true
+		btn.button_group = group
+		btn.focus_mode = Control.FOCUS_CLICK
 		btn.custom_minimum_size = Vector2(32,32)
 		# --- 纯色背景 ---
 		var style := StyleBoxFlat.new()
@@ -181,63 +187,70 @@ func init_colors() -> void:
 		
 		btn.mouse_filter = Control.MOUSE_FILTER_STOP
 		btn.set_meta("color_idx", i)
-		btn.pressed.connect(_on_color_changed.bind(i))
+		btn.toggled.connect(_on_color_toggled.bind(i))
 		color_palette.add_child(btn)
-
+		if i==0:
+			btn.button_pressed = true
+	var btns = group.get_buttons()
+	print("btns count", len(btns))
+	#group.get_buttons()[0].button_pressed = true
+	group.reset_state()
 	
-func _on_color_changed(idx: int) -> void:
-	# 例如：把当前“笔刷”颜色记录到变量
-	select_color_index = idx
+func _on_color_toggled(pressed: bool, color_idx: int) -> void:
+	if pressed:
+		select_color_index = color_idx
 
 
 
 # ========= 新增变量 =========
 @onready var edit_ui: CanvasLayer = $EditUI
 var edit_mode := false
-var brush_color_edit := 0		  # 编辑模式下的笔刷颜色
 
 # ========= 输入切换 =========
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):   # Esc 也可
 		toggle_edit_mode()
+	else:
+		input(event)
 
 func toggle_edit_mode() -> void:
-	print("toggle_edit_mode 1111")
 	edit_mode = !edit_mode
-	print("toggle_edit_mode 222")
-	
+	print("toggle_edit_mode", !edit_mode)
 	if !edit_mode:
-		pre_board = board.duplicate()
+		pre_board = board.duplicate(true)
+		restart_current_level()			# 退出编辑后重新随机一局或保留
 	update_edit_ui()
 
 func update_edit_ui():
 	edit_ui.visible = edit_mode
-	set_process_input(edit_mode)		   # 让 _input 只在编辑模式接收
+	#set_process_input(edit_mode)		   # 让 _input 只在编辑模式接收
 	if edit_mode:
 		status_lbl.text = "编辑模式"
 	else:
-		restart_current_level()			# 退出编辑后重新随机一局或保留
+		status_lbl.text = ""
 
 # ========= 编辑模式下输入 =========
-func _input(event: InputEvent) -> void:
+func input(event: InputEvent) -> void:
 	if not edit_mode: return
 
 	var pos := get_viewport().get_mouse_position()
 	var cell := _cell_at_pos(pos)
-	if cell.x < 0: return
+	if cell.x < 0:
+		return
 
 	# 左键循环颜色
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var old :int= board[cell.y][cell.x]
 		var next := (old + 1) % color_count
 		board[cell.y][cell.x] = next
-		print("11111111", cell)
+		print("input 1111", cell.x, cell.y, next)
 		redraw_board()
 
 	# 右键批量填充（同色连通块）
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
 		var target :int= board[cell.y][cell.x]
-		flood_fill(cell, target, brush_color_edit)
+		print("input 222", cell.x, cell.y, target, select_color_index)
+		flood_fill(cell, target, select_color_index)
 		redraw_board()
 
 # 工具：把屏幕坐标 → 格子坐标
@@ -278,7 +291,7 @@ func _do_load(path: String) -> void:
 			push_error("列数不符"); return
 		for x in grid_size:
 			board[y][x] = int(cols[x])
-	pre_board = board.duplicate()
+	pre_board = board.duplicate(true)
 	redraw_board()
 	status_lbl.text = "已加载: %s" % path.get_file()
 

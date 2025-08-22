@@ -26,6 +26,7 @@ layout_mode = 2
 
 [node name="Restart" type="Button" parent="UI"]
 layout_mode = 2
+focus_mode = 0
 text = "重新开始"
 
 [node name="ColorPalette" type="VBoxContainer" parent="."]
@@ -59,24 +60,28 @@ size_flags_horizontal = 4
 custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 size_flags_horizontal = 4
+focus_mode = 0
 text = "保存"
 
 [node name="Button2" type="Button" parent="EditUI/HBoxContainer"]
 custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 size_flags_horizontal = 4
+focus_mode = 0
 text = "读取"
 
 [node name="Button3" type="Button" parent="EditUI/HBoxContainer"]
 custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 size_flags_horizontal = 4
+focus_mode = 0
 text = "清空"
 
 [node name="Button4" type="Button" parent="EditUI/HBoxContainer"]
 custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 size_flags_horizontal = 4
+focus_mode = 0
 text = "返回"
 
 [node name="SaveDialog" type="FileDialog" parent="EditUI"]
