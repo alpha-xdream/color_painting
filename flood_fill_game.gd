@@ -91,10 +91,20 @@ func _on_cell_clicked(event: InputEvent, cell: ColorRect) -> void:
 	if new_color == target_color:
 		return  # 同颜色，无效点击
 
-	flood_fill(pos, target_color, new_color)
-	if !edit_mode:
+	print("cell click", event.button_index, edit_mode)
+	if edit_mode:
+		# 左键循环颜色
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			board[pos.y][pos.x] = new_color
+
+		# 右键批量填充（同色连通块）
+		if event.button_index == MOUSE_BUTTON_RIGHT:
+			flood_fill(pos, target_color, new_color)
+	else:
+		flood_fill(pos, target_color, new_color)
 		steps += 1
 		check_win_lose()
+		
 	redraw_board()
 	update_ui()
 
@@ -210,8 +220,6 @@ var edit_mode := false
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):   # Esc 也可
 		toggle_edit_mode()
-	else:
-		input(event)
 
 func toggle_edit_mode() -> void:
 	edit_mode = !edit_mode
@@ -230,28 +238,28 @@ func update_edit_ui():
 		status_lbl.text = ""
 
 # ========= 编辑模式下输入 =========
-func input(event: InputEvent) -> void:
-	if not edit_mode: return
-
-	var pos := get_viewport().get_mouse_position()
-	var cell := _cell_at_pos(pos)
-	if cell.x < 0:
-		return
-
-	# 左键循环颜色
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var old :int= board[cell.y][cell.x]
-		var next := (old + 1) % color_count
-		board[cell.y][cell.x] = next
-		print("input 1111", cell.x, cell.y, next)
-		redraw_board()
-
-	# 右键批量填充（同色连通块）
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
-		var target :int= board[cell.y][cell.x]
-		print("input 222", cell.x, cell.y, target, select_color_index)
-		flood_fill(cell, target, select_color_index)
-		redraw_board()
+#func input(event: InputEvent) -> void:
+	#if not edit_mode: return
+	#print("input 000")
+	#var pos := get_viewport().get_mouse_position()
+	#var cell := _cell_at_pos(pos)
+	#if cell.x < 0:
+		#return
+#
+	## 左键循环颜色
+	#if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		#var old :int= board[cell.y][cell.x]
+		#var next := (old + 1) % color_count
+		#board[cell.y][cell.x] = next
+		#print("input 1111", cell.x, cell.y, next)
+		#redraw_board()
+#
+	## 右键批量填充（同色连通块）
+	#if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
+		#var target :int= board[cell.y][cell.x]
+		#print("input 222", cell.x, cell.y, target, select_color_index)
+		#flood_fill(cell, target, select_color_index)
+		#redraw_board()
 
 # 工具：把屏幕坐标 → 格子坐标
 func _cell_at_pos(pos: Vector2) -> Vector2i:
@@ -294,11 +302,12 @@ func _do_load(path: String) -> void:
 	pre_board = board.duplicate(true)
 	redraw_board()
 	status_lbl.text = "已加载: %s" % path.get_file()
+	toggle_edit_mode()
 
 func _on_clear_pressed() -> void:
 	for y in grid_size:
 		for x in grid_size:
-			board[y][x] = 0
+			board[y][x] = select_color_index
 	redraw_board()
 
 func _on_return_pressed() -> void:
