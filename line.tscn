@@ -1,0 +1,21 @@
+[gd_scene load_steps=2 format=3 uid="uid://bh0kd62edg6bb"]
+
+[ext_resource type="Script" uid="uid://dnldp2eejrc6l" path="res://line.gd" id="1_084u5"]
+
+[node name="line" type="ColorRect" node_paths=PackedStringArray("LinkA", "LinkB")]
+process_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 393.0
+offset_top = 294.0
+offset_right = 753.0
+offset_bottom = 304.0
+grow_horizontal = 2
+grow_vertical = 2
+rotation = 0.00277773
+script = ExtResource("1_084u5")
+LinkA = NodePath("")
+LinkB = NodePath("")

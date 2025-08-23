@@ -1,30 +1,53 @@
-[gd_scene load_steps=3 format=3 uid="uid://d4ivs6wlnusij"]
+[gd_scene load_steps=4 format=3 uid="uid://d4ivs6wlnusij"]
 
 [ext_resource type="PackedScene" uid="uid://b1ohjvgyauq2h" path="res://circle.tscn" id="1_0xm2m"]
-[ext_resource type="Script" uid="uid://dnldp2eejrc6l" path="res://line.gd" id="2_h2yge"]
+[ext_resource type="Script" uid="uid://q40e3evtovc7" path="res://simple_fill_game.gd" id="1_h2yge"]
+[ext_resource type="PackedScene" uid="uid://bh0kd62edg6bb" path="res://line.tscn" id="3_1bvp3"]
 
 [node name="Node2D" type="Node2D"]
+script = ExtResource("1_h2yge")
 
 [node name="Circle" parent="." instance=ExtResource("1_0xm2m")]
-position = Vector2(393, 294)
 
 [node name="White2" parent="." instance=ExtResource("1_0xm2m")]
-position = Vector2(753, 295)
+position = Vector2(0, 202)
 
-[node name="line" type="ColorRect" parent="." node_paths=PackedStringArray("LinkA", "LinkB")]
-process_mode = 3
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = 393.0
-offset_top = 294.0
-offset_right = 753.0
-offset_bottom = 304.0
-grow_horizontal = 2
-grow_vertical = 2
-rotation = 0.00277773
-script = ExtResource("2_h2yge")
+[node name="line" parent="." node_paths=PackedStringArray("LinkA", "LinkB") instance=ExtResource("3_1bvp3")]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 202.0
+offset_bottom = 10.0
+rotation = 1.5708
 LinkA = NodePath("../Circle")
 LinkB = NodePath("../White2")
+
+[node name="EditUI" type="CanvasLayer" parent="."]
+
+[node name="HBoxContainer" type="HBoxContainer" parent="EditUI"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -30.0
+offset_top = 8.0
+offset_right = 30.0
+offset_bottom = 40.0
+grow_horizontal = 2
+pivot_offset = Vector2(0.5, 0)
+size_flags_horizontal = 4
+
+[node name="Button" type="Button" parent="EditUI/HBoxContainer"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+focus_mode = 0
+text = "读取"
+
+[node name="LoadDialog" type="FileDialog" parent="EditUI"]
+auto_translate_mode = 1
+title = "Open a File"
+ok_button_text = "Open"
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.txt")
+
+[connection signal="button_up" from="EditUI/HBoxContainer/Button" to="." method="_on_load_pressed"]
