@@ -1,10 +1,14 @@
 extends Node2D
+class_name SimpleFillGame
 
+var node_id: int = 0
 class SimpleNode:
+	var id: int
 	var color: int
 	var links: Array[SimpleNode] = []
 	var cells: Array[Vector2i] = []      # 额外记录所有格子坐标，方便调试
 	var circle: Circle
+		
 		# 去重添加
 	func add_links_unique(new_links: Array[SimpleNode]):
 		for n in new_links:
@@ -30,6 +34,7 @@ const PALETTE = [
 @onready var load_dialog: FileDialog = $EditUI/LoadDialog
 @onready var color_palette: VBoxContainer = $EditUI/ColorPalette
 @onready var steps_lbl: Label = $EditUI/Steps
+@onready var color_count_list: VBoxContainer = $EditUI/ColorCountList
 
 
 var color_count := 4          # 颜色种数
@@ -46,6 +51,7 @@ const LINE = preload('res://line.tscn')
 @onready var lines_root   := Node2D.new()
 var group := ButtonGroup.new()
 var select_color_index: int
+
 
 # 当前被拖拽的节点
 var dragging_node: Node2D = null
@@ -162,7 +168,6 @@ func flood_merge(node: SimpleNode, new_color: int, all_nodes: Array[SimpleNode])
 		return  # 同色无需处理
 
 	steps += 1
-	update_ui()
 	node.color = new_color
 	node.circle.set_color(PALETTE[new_color])
 
@@ -171,6 +176,7 @@ func flood_merge(node: SimpleNode, new_color: int, all_nodes: Array[SimpleNode])
 	_collect_same_color_neighbors(node, node.color, to_merge)
 
 	if to_merge.is_empty():
+		update_ui()
 		return
 
 	# 1. 合并 cells
@@ -204,6 +210,7 @@ func flood_merge(node: SimpleNode, new_color: int, all_nodes: Array[SimpleNode])
 		n.links_unique_check()
 		
 	respawn_lines()
+	update_ui()
 
 func _collect_same_color_neighbors(root: SimpleNode, target_color: int, out: Array[SimpleNode]) -> void:
 	for link in root.links:
@@ -232,6 +239,7 @@ func do_load(path: String) -> void:
 	file.close()
 
 	#grid_size = lines.size()
+	node_id = 0
 	steps = 0
 	board = []
 	for y in grid_size.y:
@@ -248,6 +256,15 @@ func do_load(path: String) -> void:
 		print("颜色 %d，格子数 %d" % [n.color, n.cells.size()])
 	spawn_circles_and_lines(nodes, 64)   # 32 像素一格
 	update_ui()
+
+func calc_min_steps():
+	var res := FloodSolver.min_steps_with_path(nodes, 2)
+	var steps  = res[0]
+	var paths  = res[1]
+
+	print("最少步数 = %d" % steps)
+	for p in paths:
+		print("第 %d 步：把节点 %d 染成颜色 %d" % [p.step, nodes[p.node_idx].id, p.new_color])
 
 # 输入：board[y][x] = color_index
 # 返回：Array[SimpleNode]  每个元素是一个连通块
@@ -270,6 +287,8 @@ func board_to_nodes(board: Array[Array], size: Vector2i) -> Array[SimpleNode]:
 				continue
 			# 新连通块
 			var node := SimpleNode.new()
+			node.id = node_id
+			node_id += 1
 			node.color = board[y][x]
 
 			# BFS 收集所有同色邻居
@@ -331,6 +350,7 @@ func spawn_circles_and_lines(simple_nodes: Array[SimpleNode], cell_size: int) ->
 		c.set_meta("simple_node", sn)   # 方便反向查找
 		circles_root.add_child(c)
 		c.set_color(PALETTE[sn.color])
+		c.set_id(sn.id)
 		sn.circle = c
 
 	# 2. 创建连线（无向图，防止重复）
@@ -358,8 +378,90 @@ func respawn_lines():
 
 func update_ui():
 	steps_lbl.text = "步数: %d" % steps
+	update_color_count()
 
 
 func _on_restart_button_up() -> void:
 	if loaded_file != null:
 		do_load(loaded_file)
+
+func make_color_line(text_left: String,color1:Color, text_mid: String, color2: Color, text_right: String) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 4)
+
+	# 左侧文字
+	var lbl1 := Label.new()
+	lbl1.text = text_left
+	h.add_child(lbl1)
+
+	# 纯色块
+	var swatch := ColorRect.new()
+	swatch.custom_minimum_size = Vector2(16, 16)
+	swatch.color = color1
+	swatch.add_theme_stylebox_override("panel", StyleBoxFlat.new())  # 圆角可选
+	h.add_child(swatch)
+	
+	# 中间文字
+	var lbl2 := Label.new()
+	lbl2.text = text_mid
+	h.add_child(lbl2)
+	
+	# 纯色块
+	swatch = ColorRect.new()
+	swatch.custom_minimum_size = Vector2(16, 16)
+	swatch.color = color2
+	swatch.add_theme_stylebox_override("panel", StyleBoxFlat.new())  # 圆角可选
+	h.add_child(swatch)
+
+	# 右侧文字
+	var lbl3 := Label.new()
+	lbl3.text = text_right
+	h.add_child(lbl3)
+
+	return h
+	
+func update_color_count() -> void:
+	# 清空旧 UI
+	for child in color_count_list.get_children():
+		child.queue_free()
+
+	var color_counts = {}
+	var list = []
+	# 统计每个 SimpleNode 的邻居颜色计数
+	for node in nodes:
+		if !color_counts.has(node.color):
+			color_counts[node.color] = 0
+		color_counts[node.color] += 1
+		var hist := {}			  # color -> count
+		for link in node.links:
+			hist[link.color] = hist.get(link.color, 0) + 1
+
+		# 找出出现次数最多的颜色
+		var max_color := -1
+		var max_cnt   := -1
+		for c in hist.keys():
+			if hist[c] > max_cnt:
+				max_cnt   = hist[c]
+				max_color = c
+		
+		if max_color >= 0:
+			list.append([node.id, node.color, max_color, max_cnt])
+		
+	if len(list) == 0:
+		return
+		
+	list.sort_custom(func(a,b):
+		return a[3] > b[3]
+	)
+	for data in list:
+		var node_color:int = data[1]
+		var max_color = data[2]
+		var max_cnt:int = data[3]
+		var line := make_color_line(
+			"Node %s" % str(data[0]),
+			PALETTE[node_color],
+			"最多邻居颜色: ",
+			PALETTE[max_color],	  # 你的调色板
+			(" 出现 %d 次(ALL)" if color_counts[max_color] == max_cnt else " 出现 %d 次") % max_cnt
+		)
+		color_count_list.add_child(line)
