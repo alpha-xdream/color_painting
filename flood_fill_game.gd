@@ -1,14 +1,14 @@
 extends Node2D
 class_name FloodFillGame
 
-@export_range(2, 6) var color_count := 4          # 颜色种数
-@export_range(10, 20) var grid_size := 10         # 10×10
+var color_count := 4          # 颜色种数
+var grid_size := Vector2i(10, 8)         # 10×10
 @export_range(15, 50) var max_steps := 25
 
 @onready var grid: GridContainer = $GridContainer
 @onready var steps_lbl: Label = $UI/Steps
 @onready var status_lbl: Label = $UI/Status
-@onready var color_palette: VBoxContainer = $ColorPalette
+@onready var color_palette: VBoxContainer = $CanvasLayer/ColorPalette
 @onready var restart: Button = $UI/Restart
 
 @onready var save_dialog: FileDialog = $EditUI/SaveDialog
@@ -46,10 +46,10 @@ func build_grid():
 		c.queue_free()
 	cells.clear()
 
-	grid.columns = grid_size
+	grid.columns = grid_size.x
 	# 创建 ColorRect
-	for y in grid_size:
-		for x in grid_size:
+	for y in grid_size.y:
+		for x in grid_size.x:
 			var c := ColorRect.new()
 			c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			c.size_flags_vertical   = Control.SIZE_EXPAND_FILL
@@ -63,9 +63,9 @@ func build_grid():
 	if len(pre_board) == 0:
 		# 随机染色
 		board = []
-		for y in grid_size:
+		for y in grid_size.y:
 			var row: Array[int] = []
-			for x in grid_size:
+			for x in grid_size.x:
 				row.append(randi_range(0, color_count-1))
 			board.append(row)
 		pre_board = board.duplicate(true)
@@ -75,8 +75,8 @@ func build_grid():
 
 func redraw_board():
 	var idx := 0
-	for y in grid_size:
-		for x in grid_size:
+	for y in grid_size.y:
+		for x in grid_size.x:
 			var ci :int = board[y][x]
 			cells[idx].color = PALETTE[ci]
 			idx += 1
@@ -112,7 +112,7 @@ func flood_fill(start: Vector2i, old: int, new: int) -> void:
 	var stack := [start]
 	while not stack.is_empty():
 		var p = stack.pop_back()
-		if p.x < 0 or p.x >= grid_size or p.y < 0 or p.y >= grid_size:
+		if p.x < 0 or p.x >= grid_size.x or p.y < 0 or p.y >= grid_size.y:
 			continue
 		if board[p.y][p.x] != old:
 			continue
@@ -202,9 +202,8 @@ func init_colors() -> void:
 		if i==0:
 			btn.button_pressed = true
 	var btns = group.get_buttons()
-	print("btns count", len(btns))
-	#group.get_buttons()[0].button_pressed = true
-	group.reset_state()
+	group.get_buttons()[0].button_pressed = true
+	group.get_buttons()[0].grab_focus()
 	
 func _on_color_toggled(pressed: bool, color_idx: int) -> void:
 	if pressed:
@@ -264,9 +263,9 @@ func update_edit_ui():
 # 工具：把屏幕坐标 → 格子坐标
 func _cell_at_pos(pos: Vector2) -> Vector2i:
 	var local := grid.get_global_transform().affine_inverse() * pos
-	var col := int(local.x / (grid.size.x / grid_size))
-	var row := int(local.y / (grid.size.y / grid_size))
-	if col < 0 or col >= grid_size or row < 0 or row >= grid_size:
+	var col := int(local.x / (grid.size.x / grid_size.x))
+	var row := int(local.y / (grid.size.y / grid_size.y))
+	if col < 0 or col >= grid_size.x or row < 0 or row >= grid_size.y:
 		return Vector2i(-1, -1)
 	return Vector2i(col, row)
 
@@ -291,13 +290,13 @@ func _do_load(path: String) -> void:
 	var lines := file.get_as_text().split("\n", false)
 	file.close()
 
-	if lines.size() != grid_size:
+	if lines.size() != grid_size.y:
 		push_error("关卡尺寸不符"); return
-	for y in grid_size:
+	for y in grid_size.y:
 		var cols := lines[y].split(",", true, 0)
-		if cols.size() != grid_size:
+		if cols.size() != grid_size.x:
 			push_error("列数不符"); return
-		for x in grid_size:
+		for x in grid_size.x:
 			board[y][x] = int(cols[x])
 	pre_board = board.duplicate(true)
 	redraw_board()
@@ -305,8 +304,8 @@ func _do_load(path: String) -> void:
 	toggle_edit_mode()
 
 func _on_clear_pressed() -> void:
-	for y in grid_size:
-		for x in grid_size:
+	for y in grid_size.y:
+		for x in grid_size.x:
 			board[y][x] = select_color_index
 	redraw_board()
 

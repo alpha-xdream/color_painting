@@ -1,25 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://d4ivs6wlnusij"]
+[gd_scene load_steps=2 format=3 uid="uid://d4ivs6wlnusij"]
 
-[ext_resource type="PackedScene" uid="uid://b1ohjvgyauq2h" path="res://circle.tscn" id="1_0xm2m"]
 [ext_resource type="Script" uid="uid://q40e3evtovc7" path="res://simple_fill_game.gd" id="1_h2yge"]
-[ext_resource type="PackedScene" uid="uid://bh0kd62edg6bb" path="res://line.tscn" id="3_1bvp3"]
 
 [node name="Node2D" type="Node2D"]
 script = ExtResource("1_h2yge")
-
-[node name="Circle" parent="." instance=ExtResource("1_0xm2m")]
-
-[node name="White2" parent="." instance=ExtResource("1_0xm2m")]
-position = Vector2(0, 202)
-
-[node name="line" parent="." node_paths=PackedStringArray("LinkA", "LinkB") instance=ExtResource("3_1bvp3")]
-offset_left = 0.0
-offset_top = 0.0
-offset_right = 202.0
-offset_bottom = 10.0
-rotation = 1.5708
-LinkA = NodePath("../Circle")
-LinkB = NodePath("../White2")
 
 [node name="EditUI" type="CanvasLayer" parent="."]
 
@@ -42,6 +26,23 @@ size_flags_horizontal = 4
 focus_mode = 0
 text = "读取"
 
+[node name="Restart" type="Button" parent="EditUI/HBoxContainer"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+focus_mode = 0
+text = "重置"
+
+[node name="Steps" type="Label" parent="EditUI"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 68.0
+offset_top = 12.0
+offset_right = 150.0
+offset_bottom = 35.0
+grow_horizontal = 2
+text = "123"
+
 [node name="LoadDialog" type="FileDialog" parent="EditUI"]
 auto_translate_mode = 1
 title = "Open a File"
@@ -50,4 +51,21 @@ file_mode = 0
 access = 2
 filters = PackedStringArray("*.txt")
 
+[node name="ColorPalette" type="VBoxContainer" parent="EditUI"]
+layout_direction = 2
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -136.0
+offset_top = -116.0
+offset_right = -54.0
+offset_bottom = 57.0
+grow_horizontal = 0
+grow_vertical = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+
 [connection signal="button_up" from="EditUI/HBoxContainer/Button" to="." method="_on_load_pressed"]
+[connection signal="button_up" from="EditUI/HBoxContainer/Restart" to="." method="_on_restart_button_up"]

@@ -1,4 +1,5 @@
 extends Area2D
+class_name Circle
 @onready var circle: Sprite2D = $Circle
 
 # 允许拖拽
